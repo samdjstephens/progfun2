@@ -10,7 +10,7 @@ trait Solver extends GameDef {
   /**
    * Returns `true` if the block `b` is at the final position
    */
-  def done(b: Block): Boolean = ???
+  def done(b: Block): Boolean = b == Block(goal, goal)
 
   /**
    * This function takes two arguments: the current block `b` and
@@ -28,7 +28,8 @@ trait Solver extends GameDef {
    * It should only return valid neighbors, i.e. block positions
    * that are inside the terrain.
    */
-  def neighborsWithHistory(b: Block, history: List[Move]): Stream[(Block, List[Move])] = ???
+  def neighborsWithHistory(b: Block, history: List[Move]): Stream[(Block, List[Move])] =
+    for ((block, move) <- b.legalNeighbors.toStream) yield (block, move :: history)
 
   /**
    * This function returns the list of neighbors without the block
@@ -36,7 +37,8 @@ trait Solver extends GameDef {
    * make sure that we don't explore circular paths.
    */
   def newNeighborsOnly(neighbors: Stream[(Block, List[Move])],
-                       explored: Set[Block]): Stream[(Block, List[Move])] = ???
+                       explored: Set[Block]): Stream[(Block, List[Move])] =
+    neighbors filter { case (b, _) => !(explored contains b) }
 
   /**
    * The function `from` returns the stream of all possible paths
@@ -62,7 +64,12 @@ trait Solver extends GameDef {
    * construct the correctly sorted stream.
    */
   def from(initial: Stream[(Block, List[Move])],
-           explored: Set[Block]): Stream[(Block, List[Move])] = ???
+           explored: Set[Block]): Stream[(Block, List[Move])] = {
+    for {
+      (b, history) <- initial
+      (bNew, histNew) <- newNeighborsOnly(neighborsWithHistory(b, history), explored)
+    } yield ??? // TODO: how to ensure the final stream is sorted? Write down a simple "initial" stream and consider how that would grow
+  }
 
   /**
    * The stream of all paths that begin at the starting block.
