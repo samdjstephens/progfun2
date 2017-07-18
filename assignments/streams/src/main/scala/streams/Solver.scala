@@ -65,22 +65,26 @@ trait Solver extends GameDef {
    */
   def from(initial: Stream[(Block, List[Move])],
            explored: Set[Block]): Stream[(Block, List[Move])] = {
-    for {
+    val more = for {
       (b, history) <- initial
       (bNew, histNew) <- newNeighborsOnly(neighborsWithHistory(b, history), explored)
-    } yield ??? // TODO: how to ensure the final stream is sorted? Write down a simple "initial" stream and consider how that would grow
+    } yield (bNew, histNew)
+
+    val updatedExplored = explored ++ (more map { case (b, _) => b })
+
+    initial #::: from(more, updatedExplored)
   }
 
   /**
    * The stream of all paths that begin at the starting block.
    */
-  lazy val pathsFromStart: Stream[(Block, List[Move])] = ???
+  lazy val pathsFromStart: Stream[(Block, List[Move])] = from(Stream((startBlock, Nil)), Set.empty)
 
   /**
    * Returns a stream of all possible pairs of the goal block along
    * with the history how it was reached.
    */
-  lazy val pathsToGoal: Stream[(Block, List[Move])] = ???
+  lazy val pathsToGoal: Stream[(Block, List[Move])] = pathsFromStart filter { case (b, _) => done(b)}
 
   /**
    * The (or one of the) shortest sequence(s) of moves to reach the
@@ -90,5 +94,5 @@ trait Solver extends GameDef {
    * the first move that the player should perform from the starting
    * position.
    */
-  lazy val solution: List[Move] = ???
+  lazy val solution: List[Move] = pathsToGoal match { case (_, moves) #:: _ => moves }
 }
