@@ -78,7 +78,7 @@ trait Solver extends GameDef {
   /**
    * The stream of all paths that begin at the starting block.
    */
-  lazy val pathsFromStart: Stream[(Block, List[Move])] = from(Stream((startBlock, Nil)), Set.empty)
+  lazy val pathsFromStart: Stream[(Block, List[Move])] = from(Stream((startBlock, Nil)), Set.empty) take 100
 
   /**
    * Returns a stream of all possible pairs of the goal block along
@@ -94,5 +94,5 @@ trait Solver extends GameDef {
    * the first move that the player should perform from the starting
    * position.
    */
-  lazy val solution: List[Move] = pathsToGoal match { case (_, moves) #:: _ => moves }
+  lazy val solution: List[Move] = pathsToGoal match { case (_, moves) #:: _ => moves.reverse }
 }

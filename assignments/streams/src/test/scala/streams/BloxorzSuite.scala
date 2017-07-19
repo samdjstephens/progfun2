@@ -1,10 +1,8 @@
 package streams
 
 import org.scalatest.FunSuite
-
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
-
 import Bloxorz._
 
 @RunWith(classOf[JUnitRunner])
@@ -64,6 +62,33 @@ class BloxorzSuite extends FunSuite {
     }
   }
 
+  test("neighborsWithHistory") {
+    new Level1 {
+      val neighbors = neighborsWithHistory(Block(Pos(1,1),Pos(1,1)), List(Left,Up)).toSet
+      assert(neighbors == Set(
+        (Block(Pos(1,2),Pos(1,3)), List(Right,Left,Up)),
+        (Block(Pos(2,1),Pos(3,1)), List(Down,Left,Up))
+      ))
+    }
+  }
+
+  test("newNeighborsOnly") {
+    new Level1 {
+      val newNeighbors = newNeighborsOnly(
+        Set(
+          (Block(Pos(1,2),Pos(1,3)), List(Right,Left,Up)),
+          (Block(Pos(2,1),Pos(3,1)), List(Down,Left,Up))
+        ).toStream,
+
+        Set(Block(Pos(1,2),Pos(1,3)), Block(Pos(1,1),Pos(1,1)))
+      ).toSet
+
+      assert(newNeighbors == Set(
+        (Block(Pos(2,1),Pos(3,1)), List(Down,Left,Up))
+      ))
+    }
+  }
+
 	test("optimal solution for level 1") {
     new Level1 {
       assert(solve(solution) == Block(goal, goal))
@@ -76,5 +101,52 @@ class BloxorzSuite extends FunSuite {
       assert(solution.length == optsolution.length)
     }
   }
+
+  trait Level2 extends SolutionChecker {
+    /* terrain for level 2 - only 1 optimal solution */
+
+    val level =
+      """------
+        |-o----
+        |-o----
+        |-SooT-
+        |------
+      """.stripMargin
+
+    val optsolution = List(Right, Right)
+  }
+
+  test("level2 startPos") {
+    new Level2 {
+      assert(startPos == Pos(3, 1))
+    }
+  }
+
+  test("level2 legal") {
+    new Level2 {
+      val block = Block(Pos(0, 1), Pos(1, 1))
+      assert(!block.isLegal)
+    }
+  }
+
+  test("level2 neighborsWithHistory from start") {
+    new Level2 {
+      assert(neighborsWithHistory(startBlock, Nil).toSet == Set(
+        (Block(Pos(1,1), Pos(2,1)), List(Up)), (Block(Pos(3, 2), Pos(3, 3)), List(Right))
+      ))
+    }
+  }
+
+  test("level2 right right = goal") {
+    new Level2 {
+      assert(done(startBlock.right.right))
+    }
+  }
+
+//  test("level2") {
+//    new Level2 {
+//      assert(solution == optsolution)
+//    }
+//  }
 
 }
