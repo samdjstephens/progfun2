@@ -143,10 +143,58 @@ class BloxorzSuite extends FunSuite {
     }
   }
 
-//  test("level2") {
-//    new Level2 {
-//      assert(solution == optsolution)
-//    }
-//  }
+  test("level2 from is strictly storted by lengths of moves") {
+    new Level2 {
+      private val histLengths = from(Stream((startBlock, Nil)), Set.empty).take(100).toList.map({ case (_, h) => h.length })
+      assert(histLengths.sorted == histLengths)
+    }
+  }
+
+  test("level2 from is has a finite length") {
+    new Level2 {
+      private val upperBound = 9999
+      private val fromLength = from(Stream((startBlock, Nil)), Set.empty).take(upperBound).toList.length
+      assert(fromLength < upperBound)
+    }
+  }
+
+  test("level2 optSolution") {
+    new Level2 {
+      assert(solution == optsolution)
+    }
+  }
+
+  trait Level3 extends SolutionChecker {
+    /* terrain for level 3 - large map */
+
+    val level =
+      """--------------------
+        |--------------------
+        |----oSoo------------
+        |----oooo------------
+        |----ooooooooooooo---
+        |----oooo--------o---
+        |----ooooooo-----o---
+        |----ooo--oooooToo---
+        |----oooo-------oo---
+        |----ooooooooooooo---
+      """.stripMargin
+
+    val optsolution = List(Down, Down, Right, Down, Right, Right, Down, Right, Right, Right)
+  }
+
+  test("level3 optSolution works") {
+    new Level3 {
+      assert(done(solve(optsolution)))
+    }
+  }
+
+  test("level3 optSolution length") {
+    new Level3 {
+      assert(solution.length == optsolution.length)
+    }
+  }
+
+
 
 }
