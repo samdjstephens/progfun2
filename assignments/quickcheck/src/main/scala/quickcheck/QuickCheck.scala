@@ -18,6 +18,12 @@ abstract class QuickCheckHeap extends Properties("Heap") with IntHeap {
   )
   implicit lazy val arbHeap: Arbitrary[H] = Arbitrary(genHeap)
 
+  def isOrderedRecur(h: H, prevMin: Int): Boolean = {
+    if (isEmpty(h)) true
+    else if (findMin(h) < prevMin) false
+    else isOrderedRecur(deleteMin(h), findMin(h))
+  }
+
   property("findMin after insert min into heap gives min") = forAll { (h: H) =>
     val m = if (isEmpty(h)) 0 else findMin(h)
     findMin(insert(m, h)) == m
@@ -35,12 +41,12 @@ abstract class QuickCheckHeap extends Properties("Heap") with IntHeap {
     isEmpty(deleteMin(h))
   }
 
+  property("isEmpty of 1 element heap is false") = forAll { (i: Int) =>
+    val h = insert(i, empty)
+    !isEmpty(h)
+  }
+
   property("findMin/deleteMin/findMind etc. of arbitrary heap is ordered") = forAll { (h: H) =>
-    def isOrderedRecur(h: H, prevMin: Int): Boolean = {
-      if (isEmpty(h)) true
-      else if (findMin(h) < prevMin) false
-      else isOrderedRecur(deleteMin(h), findMin(h))
-    }
     isOrderedRecur(h, Int.MinValue)
   }
 
@@ -50,6 +56,22 @@ abstract class QuickCheckHeap extends Properties("Heap") with IntHeap {
       Math.min(min1, min2) == findMin(meld(h1, h2))
     }
     else true
+  }
+
+  property("findMin of an empty heap throws an exception") = forAll { (i: Int) =>
+    throws(classOf[NoSuchElementException])({ findMin(empty) })
+  }
+
+  property("deleteMin of an empty heap throws an exception") = forAll { (i: Int) =>
+    throws(classOf[NoSuchElementException])({ deleteMin(empty) })
+  }
+
+  property("Meld empty to empty gives an empty") =  forAll { (i: Int) =>
+    isEmpty(meld(empty, empty))
+  }
+
+  property("findMin/deleteMin/findMind etc. of two melded arbitrary heaps is ordered") = forAll { (h1: H, h2: H) =>
+    isOrderedRecur(meld(h1, h2), Int.MinValue)
   }
 
 }
