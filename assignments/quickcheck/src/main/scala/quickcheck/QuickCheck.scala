@@ -18,10 +18,19 @@ abstract class QuickCheckHeap extends Properties("Heap") with IntHeap {
   )
   implicit lazy val arbHeap: Arbitrary[H] = Arbitrary(genHeap)
 
-  def isOrderedRecur(h: H, prevMin: Int): Boolean = {
-    if (isEmpty(h)) true
-    else if (findMin(h) < prevMin) false
-    else isOrderedRecur(deleteMin(h), findMin(h))
+  def isOrdered(h: H): Boolean = {
+    def isOrderedRecur(h: H, prevMin: Int): Boolean = {
+      if (isEmpty(h)) true
+      else if (findMin(h) < prevMin) false
+      else isOrderedRecur(deleteMin(h), findMin(h))
+    }
+    isOrderedRecur(h, Int.MinValue)
+  }
+
+  def contains(h: H, x: Int): Boolean = {
+    if (isEmpty(h)) false
+    else if (findMin(h) == x) true
+    else contains(deleteMin(h), x)
   }
 
   property("findMin after insert min into heap gives min") = forAll { (h: H) =>
@@ -47,7 +56,7 @@ abstract class QuickCheckHeap extends Properties("Heap") with IntHeap {
   }
 
   property("findMin/deleteMin/findMind etc. of arbitrary heap is ordered") = forAll { (h: H) =>
-    isOrderedRecur(h, Int.MinValue)
+    isOrdered(h)
   }
 
   property("findMin of two melded arbitrary heaps is min of both heaps individually") = forAll { (h1: H, h2: H) =>
@@ -70,8 +79,51 @@ abstract class QuickCheckHeap extends Properties("Heap") with IntHeap {
     isEmpty(meld(empty, empty))
   }
 
-  property("findMin/deleteMin/findMind etc. of two melded arbitrary heaps is ordered") = forAll { (h1: H, h2: H) =>
-    isOrderedRecur(meld(h1, h2), Int.MinValue)
+  property("meld or two arbitrary heaps is ordered") = forAll { (h1: H, h2: H) =>
+    isOrdered(meld(h1, h2))
   }
 
+  property("insert arb element into arb heap is ordered") = forAll { (h: H, i: Int) =>
+    isOrdered(insert(i, h))
+  }
+
+  property("meld of empty and arbitrary heap is ordered") = forAll { (h: H) =>
+    isOrdered(meld(empty, h))
+  }
+
+  property("empty with 3 elements inserted is ordered") = forAll { (i: Int, j: Int, k: Int) =>
+    val h = insert(k, insert(j, insert(i, empty)))
+    isOrdered(h)
+  }
+
+  property("findMin after insert of larger-than-min element into arb heap is previous min") = forAll { (h: H) =>
+    if (!isEmpty(h) && findMin(h) < Int.MaxValue) {
+      val min = findMin(h)
+      findMin(insert(min+1, h)) == min
+    } else true
+  }
+
+  property("findMin after insert of smaller than min element into arb heap is new element") = forAll { (h: H) =>
+    if (!isEmpty(h) && findMin(h) > Int.MinValue) {
+      val min = findMin(h)
+      val newMin = min - 1
+      findMin(insert(newMin, h)) == newMin
+    } else true
+  }
+
+  property("findMin of 1 element min value heap melded with arbitrary heap is min value") = forAll { (h: H) =>
+    val minValueHeap = insert(Int.MinValue, empty)
+    findMin(meld(h, minValueHeap)) == Int.MinValue
+  }
+
+  property("order of meld of two arbitrary heap doesnt impact findMin") = forAll { (h1: H, h2: H) =>
+    if (!isEmpty(h1) && !isEmpty(h2))
+      findMin(meld(h1, h2)) == findMin(meld(h2, h1))
+    else true
+  }
+
+  property("heap resulting from inserting arbitrary element contains element") = forAll { (h: H, i: Int) =>
+    val derived = insert(i, h)
+    contains(derived, i)
+  }
 }
